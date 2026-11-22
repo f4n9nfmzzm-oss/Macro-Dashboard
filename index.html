@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>宏观指标看板 · 危机追踪版</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  --kimi-color-text-primary:#191c22;
+  --kimi-color-text-secondary:#4d5560;
+  --kimi-color-text-tertiary:#8a93a0;
+  --kimi-color-text-quaternary:#b8bfc9;
+  --kimi-color-border:#e4e7ec;
+  --kimi-color-danger:#e5484d;
+  --kimi-color-positive:#2f9e6e;
+  --kimi-chart-1:#4c8dff;
+  --kimi-chart-2:#f2555a;
+  --kimi-chart-3:#f7a700;
+  --kimi-chart-4:#8e6bff;
+  --kimi-chart-5:#2fbf8f;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#e8eaee;
+    --kimi-color-text-secondary:#a7aeba;
+    --kimi-color-text-tertiary:#7c8492;
+    --kimi-color-text-quaternary:#5b6370;
+    --kimi-color-border:#2c313a;
+    --kimi-color-danger:#ff6369;
+    --kimi-color-positive:#3ecf8e;
+  }
+}
+html{background:Canvas}
+body{margin:0;padding:16px}
+#page{max-width:760px;margin:0 auto;font-family:var(--kimi-font-sans);color:var(--kimi-color-text-primary)}
+</style>
+<style>
+#db{width:100%}
+#db button{font:inherit}
+#db .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+#db .hd{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0 10px 0}
+#db .hd h3{margin:0;font-size:17px;font-weight:500;letter-spacing:0}
+#db .hd span{font-size:12px;color:var(--kimi-color-text-tertiary)}
+#db .statusbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--kimi-color-border);border-radius:12px;padding:10px 12px;font-size:13px}
+#db .statusbar .sl{display:inline-flex;align-items:center;gap:4px}
+#db .statusbar b{font-weight:600}
+#db .statusbar .vd{color:var(--kimi-color-text-secondary)}
+#db .lt{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;flex:none}
+#db .l-r{background:var(--kimi-color-danger);box-shadow:0 0 0 3px color-mix(in srgb,var(--kimi-color-danger) 18%,transparent)}
+#db .l-y{background:#f7a700;box-shadow:0 0 0 3px color-mix(in srgb,#f7a700 18%,transparent)}
+#db .l-g{background:var(--kimi-color-positive);box-shadow:0 0 0 3px color-mix(in srgb,var(--kimi-color-positive) 18%,transparent)}
+#db .sec{font-size:14px;font-weight:500;margin:16px 0 8px 0;color:var(--kimi-color-text-secondary);display:flex;align-items:center;gap:6px}
+#db .panel{border:1px solid var(--kimi-color-border);border-radius:12px;padding:12px;background:Canvas}
+#db .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){#db .grid{grid-template-columns:1fr}}
+#db .card{border:1px solid var(--kimi-color-border);border-radius:10px;padding:12px;background:Canvas}
+#db .card .nm{font-size:12px;color:var(--kimi-color-text-tertiary);display:flex;justify-content:space-between;align-items:center}
+#db .card .vl{font-size:26px;font-weight:500;line-height:1.15;margin:4px 0 6px 0}
+#db .card .vl i{font-style:normal;font-size:12px;font-weight:400;color:var(--kimi-color-text-tertiary);margin-left:4px}
+#db .chips{display:flex;gap:4px;flex-wrap:wrap}
+#db .chip{font-size:12px;border-radius:6px;padding:1px 6px;color:var(--kimi-color-text-secondary)}
+#db .chip b{font-weight:500}
+#db .up{color:var(--kimi-color-danger);background:color-mix(in srgb,var(--kimi-color-danger) 12%,transparent)}
+#db .dn{color:var(--kimi-color-positive);background:color-mix(in srgb,var(--kimi-color-positive) 12%,transparent)}
+#db .ft{font-size:12px;color:var(--kimi-color-text-quaternary);margin-top:12px;line-height:1.6}
+#db svg{display:block}
+#db .lg{display:flex;gap:12px;font-size:12px;color:var(--kimi-color-text-secondary);margin-bottom:4px;flex-wrap:wrap}
+#db .lg em{font-style:normal;display:inline-flex;align-items:center;gap:4px}
+#db .lg i{display:inline-block;width:12px;height:2px}
+#db .note{font-size:12px;color:var(--kimi-color-text-tertiary);margin-top:8px;line-height:1.6}
+#db .krow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12px}
+#db .krow .k{border:1px solid var(--kimi-color-border);border-radius:8px;padding:4px 10px;color:var(--kimi-color-text-secondary)}
+#db .krow .k b{color:var(--kimi-color-text-primary);font-weight:500}
+#db .card,#db .panel{position:relative}
+#db .tiptip{position:absolute;display:none;z-index:9;background:Canvas;color:var(--kimi-color-text-primary);border:1px solid var(--kimi-color-border);border-radius:8px;padding:6px 9px;font-size:11px;line-height:1.7;box-shadow:0 4px 16px rgba(0,0,0,.14);pointer-events:none;white-space:nowrap}
+#db .tiptip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+#db .tiptip b{font-weight:600}
+#db .tiptip .up,#db .tiptip .dn{background:transparent;padding:0}
+</style>
+</head>
+<body>
+<div id="page">
+<div id="db">
+
+<div class="hd"><h3>宏观指标看板 · 危机追踪版</h3><span class="num" id="asof"></span></div>
+
+<div class="statusbar"><b>总体状态</b>
+<span class="sl"><i class="lt l-r"></i><b id="cR">0</b></span>
+<span class="sl"><i class="lt l-y"></i><b id="cY">0</b></span>
+<span class="sl"><i class="lt l-g"></i><b id="cG">0</b></span>
+<span class="vd" id="verdict">红色警报：流动性抛售蔓延至贵金属与工业金属；信用链尚未失守 · 拐点清单 0/4 未触发</span>
+</div>
+
+<div class="sec"><i class="lt l-y"></i>危机与拐点信号</div>
+<div class="grid" id="g0"></div>
+<div class="panel" style="margin-top:12px"><b style="font-size:13px;font-weight:500">组合判读</b>
+<div class="note" style="margin-top:6px">① 金银比 60→86（半年+44%）：白银遭流动性抛售，急升段历史上常对应美元流动性冲击的中段，尚未见顶回落。<br>② 标普 -8.6% vs HYG 仅 -0.8%：信用市场远比股市淡定。若危机真恶化，先崩的是信用不是股票——目前更像估值重定价。<br>③ MOVE 106：利率波动高位但未失序（&gt;120 才算管道出问题）。<br>④ HY OAS 347bp：常态区上沿，未进入"压力"区。</div>
+<div class="note" style="color:var(--kimi-color-text-primary)"><b style="font-weight:500">拐点观察清单（出现≥3项 → 历史底部区域）：</b>金银比见顶回落 · HYG 止跌反弹且 HY OAS 快速收窄 · VXX 自高点回落超30% · MOVE 回落至90下方。</div></div>
+
+<div class="sec"><i class="lt l-y"></i>信用 · 高收益债利差 HY OAS（bp）</div>
+<div class="card"><div class="nm"><span>ICE BofA 美国高收益债期权调整利差</span><span class="num" id="hyo-dt">11-19</span></div>
+<div class="vl num" id="hyo-vl">352<i>bp</i></div>
+<div class="chips" id="hyo-chips"><span class="chip up num">周 <b>+29bp</b></span><span class="chip num">52周区间 <b>260–352</b></span><span class="chip num">长期均值 <b>382</b></span><span class="chip up num">同比 <b>+约35bp</b></span></div>
+<div class="spk2" style="margin-top:8px"></div>
+<div class="note">高收益债收益率减无风险利率的利差 = 市场给"可能违约"定的价。&lt;300 亢奋（绿）、300-450 常态（黄）、450-600 压力（红）、&gt;600 危机。它是信用危机的第一警报器：历史上每次 HY OAS 进入压力区，股市都很难独善其身。近11个交易日：342→334→330→330→320→323→334→343→347→352，已创52周新高。</div></div>
+
+<div class="sec">股指与风险偏好</div>
+<div class="grid" id="g2"></div>
+
+<div class="sec">大宗商品</div>
+<div class="grid" id="g3"></div>
+
+<div class="sec">利率与汇率</div>
+<div class="grid" id="g1"></div>
+
+<div class="sec"><i class="lt l-y"></i>通胀 · CPI 同比（%）</div>
+<div class="panel"><div class="lg"><em><i style="background:var(--kimi-chart-1)"></i>美国</em><em><i style="background:var(--kimi-chart-2)"></i>中国</em></div><div id="cpiChart"></div>
+<div class="note">灯号口径：CPI 同比 &lt;3 绿、3-4.5 黄、&gt;4.5 红（美、中同标准）。当前美 3.91、中 4.57 均黄——粘性通胀是本轮紧缩的源头：通胀不降，美联储加息不止，估值压制就持续。</div></div>
+
+<div class="sec"><i class="lt l-y"></i>美元利率 · 国债收益率（%）</div>
+<div class="panel"><div class="lg"><em><i style="background:var(--kimi-chart-1)"></i>13周</em><em><i style="background:var(--kimi-chart-3)"></i>5年</em><em><i style="background:var(--kimi-chart-4)"></i>10年</em><em><i style="background:var(--kimi-chart-2)"></i>30年</em></div><div id="ratesChart"></div>
+<div class="krow"><span class="k num">3M <b id="r3m">4.12</b></span><span class="k num">5Y <b id="r5y">4.70</b></span><span class="k num">10Y <b id="r10y">4.91</b></span><span class="k num">30Y <b id="r30y">5.30</b></span><span class="k num">10Y−3M 利差 <b id="rdiff">+79bp</b></span></div>
+<div class="note">美债是全球资产定价锚。灯号按 10Y 计：&lt;4.5 绿、4.5-5.2 黄、&gt;5.2 红（当前黄）。短端跟随政策利率，长端反映期限溢价与发债供给；短端高+长端更高的陡峭曲线，是"紧缩未结束"的定价。</div></div>
+
+<div class="sec"><i class="lt l-y"></i>美联储点阵图 · 2026年9月 SEP（联邦基金利率，%）</div>
+<div class="panel"><div class="lg"><em><i style="background:var(--kimi-chart-1);height:8px;width:8px;border-radius:50%"></i>官员预测点（2026列完整分布）</em><em><i style="background:var(--kimi-chart-2);height:8px;width:8px;transform:rotate(45deg)"></i>中位数（2027起）</em><em><i style="background:transparent;border:1.5px solid var(--kimi-chart-3);height:7px;width:7px;border-radius:50%"></i>市场隐含</em></div><div id="dots"></div>
+<div class="krow"><span class="k">12月8-9日 FOMC · 加息25bp概率 <b class="num">~88%</b></span><span class="k num">CME <b>86%</b></span><span class="k num">Kalshi <b>90%</b></span><span class="k num">Polymarket <b>89%</b></span></div>
+<div class="note">灯号：市场与点阵图一致=绿；市场比官员更鹰=黄（紧缩风险被低估）；更鸽=绿。当前黄——期货已押注2027年3月前到 4.4%，而官员中位数指引 2027 年按兵不动。灰色带为当前目标区间 3.75-4.00%；2026列：12人→4.00-4.25%、4人→4.25-4.50%、2人→维持不变。下次点阵图更新：12月会议。</div></div>
+
+<div class="sec"><i class="lt l-g"></i>中国外汇储备（万亿美元）</div>
+<div class="panel"><div id="fxrChart"></div>
+<div class="note">灯号：&gt;3.2 绿、3.1-3.2 黄、&lt;3.1 红。外储 3.39 万亿属充足水平，只有"快速下降"才需警惕资本外流压力（如单月降 500 亿以上连续出现）。</div></div>
+
+<div class="ft">红涨绿跌 · 灯号：红=危机信号、黄=警戒、绿=正常（各指标口径见卡片内注释）· 本页数据截至 2026-11-20（HY OAS 11-19，点阵图/利率预期 11-21）。来源：IMF、Yahoo Finance、FRED（ICE BofA）、CME/Kalshi/Polymarket。VX=F 无数据，VIX 期限结构以 VXX 代理。<br>自动更新版 · 每 5 分钟检查新数据 · 抓数引擎：GitHub Actions</div>
+
+</div>
+</div>
+<script type="module">
+const SNAP = {"cpi": {"labels": ["2024-M12", "2025-M01", "2025-M02", "2025-M03", "2025-M04", "2025-M05", "2025-M06", "2025-M07", "2025-M08", "2025-M09", "2025-M11", "2025-M12", "2026-M01", "2026-M02", "2026-M03", "2026-M04", "2026-M05", "2026-M06", "2026-M07", "2026-M08", "2026-M09", "2026-M10"], "us": [3.0, 2.82, 2.39, 2.31, 2.35, 2.67, 2.7, 2.92, 3.01, 2.68, 2.71, 3.06, 2.87, 3.49, 4.13, 4.47, 3.88, 3.52, 3.69, 4.0, 3.91], "cn": [3.6, 3.4, 3.2, 3.12, 3.12, 3.01, 3.42, 3.42, 3.52, 3.84, 3.74, 3.84, 3.84, 4.78, 4.26, 4.36, 4.36, 4.04, 3.94, 4.25, 4.45, 4.57]},
+"rates": {"labels": ["05-18","05-25","06-01","06-08","06-15","06-22","06-29","07-06","07-13","07-20","07-27","08-03","08-10","08-17","08-24","08-31","09-07","09-14","09-21","09-28","10-05","10-12","10-19","10-26","11-02","11-09","11-20"],
+"w": [3.585,3.588,3.625,3.618,3.658,3.663,3.668,3.695,3.707,3.805,3.682,3.710,3.697,3.710,3.730,3.757,3.913,3.978,4.070,3.993,4.057,4.070,4.032,3.973,4.000,4.122,4.122],
+"y5": [4.256,4.149,4.280,4.213,4.225,4.130,4.230,4.308,4.273,4.426,4.460,4.362,4.362,4.424,4.481,4.550,4.791,4.856,5.007,5.055,5.021,4.899,4.805,4.721,4.648,4.981,4.701],
+"y10": [4.558,4.453,4.536,4.487,4.451,4.372,4.485,4.569,4.541,4.679,4.745,4.660,4.696,4.738,4.720,4.784,4.975,4.998,5.184,5.277,5.244,5.098,4.988,4.929,4.859,5.154,4.912],
+"y30": [5.064,4.993,4.999,4.975,4.901,4.864,4.985,5.071,5.064,5.162,5.275,5.211,5.265,5.276,5.206,5.246,5.354,5.331,5.504,5.630,5.600,5.436,5.315,5.309,5.260,5.481,5.303]},
+"hyoas": {"vals": [348,342,334,330,330,320,323,334,343,347,352], "dates": ["11-05","11-06","11-09","11-10","11-11","11-12","11-13","11-20","11-17","11-18","11-19"]},
+"sig": [
+{"name": "金银比（1盎司金兑银盎司数）", "unit": "", "light": "y", "vals": [59.6,60.7,63.3,62.5,63.0,69.2,67.1,68.8,71.7,69.4,71.3,69.5,68.3,67.4,67.6,67.8,68.3,66.5,67.3,69.4,69.5,73.4,74.6,79.4,78.7,79.3,85.6], "dates": ["05-18","05-25","06-01","06-08","06-15","06-22","06-29","07-06","07-13","07-20","07-27","08-03","08-10","08-17","08-24","08-31","09-07","09-14","09-21","09-28","10-05","10-12","10-19","10-26","11-02","11-09","11-20"], "last": 85.6, "digits": 1, "w1": 7.94, "m1": 14.75, "m3": 27.0, "m6": 43.62, "pct": true, "note": "1盎司黄金能换多少盎司白银。白银带工业属性，流动性紧张时被优先抛售换现金——比值急升=市场缺美元。75-90 黄、>90 红；比值见顶回落常领先风险资产见底 1-4 周，是拐点清单第一项。"},
+{"name": "金铜比（1盎司金兑铜磅数）", "unit": "", "light": "g", "vals": [713.2,722.2,696.9,659.2,656.7,667.0,678.5,659.9,646.1,644.1,638.1,669.6,672.4,711.4,690.3,678.6,681.5,668.9,645.4,641.1,634.7,640.2,618.9,603.7,655.3,639.2,640.9], "dates": ["05-18","05-25","06-01","06-08","06-15","06-22","06-29","07-06","07-13","07-20","07-27","08-03","08-10","08-17","08-24","08-31","09-07","09-14","09-21","09-28","10-05","10-12","10-19","10-26","11-02","11-09","11-20"], "last": 640.9, "digits": 0, "w1": 0.27, "m1": 3.55, "m3": -9.91, "m6": -10.14, "pct": true, "note": "1盎司黄金换多少磅铜。铜=全球增长（铜博士），金=避险；比值走高=市场在为衰退定价。<660 绿、660-700 黄、>700 红。本轮黄金跌幅大于铜，故该比值反而回落——与金银比信号方向相反，说明是贵金属泡沫挤压而非纯衰退交易。"},
+{"name": "MOVE 利率波动率", "unit": "", "light": "y", "vals": [78.43,70.22,75.2,69.36,65.39,66.79,65.4,69.55,70.88,76.82,83.02,72.03,69.58,73.4,70.97,73.1,82.21,80.64,96.0,107.29,98.47,101.1,103.31,100.2,92.77,98.79,106.31], "dates": ["05-18","05-25","06-01","06-08","06-15","06-22","06-29","07-06","07-13","07-20","07-27","08-03","08-10","08-17","08-24","08-31","09-07","09-14","09-21","09-28","10-05","10-12","10-19","10-26","11-02","11-09","11-20"], "last": 106.31, "digits": 1, "w1": 7.61, "m1": 2.9, "m3": 44.84, "m6": 35.55, "pct": true, "note": "美债期权隐含波动率，利率市场的恐慌温度计。<90 绿、90-120 黄、>120 红（国债市场管道失序，2020年3月曾达 163，随后联储被迫无限 QE）。MOVE 飙升而股市尚稳时，往往是危机传导到利率端的早期信号。"},
+{"name": "HYG 高收益债ETF", "unit": "美元", "light": "g", "vals": [77.5738,77.9621,77.5026,78.0002,78.0685,77.8929,78.1363,78.1363,78.0775,77.6658,77.9109,78.4172,78.5157,78.4172,78.5452,78.4012,77.8466,77.7773,77.1137,76.5117,76.8300,76.4620,76.6510,77.0290,77.2300,76.9400,76.33], "dates": ["05-18","05-25","06-01","06-08","06-15","06-22","06-29","07-06","07-13","07-20","07-27","08-03","08-10","08-17","08-24","08-31","09-07","09-14","09-21","09-28","10-05","10-12","10-19","10-26","11-02","11-09","11-20"], "last": 76.33, "digits": 2, "w1": -0.79, "m1": -0.42, "m3": -2.66, "m6": -1.6, "pct": true, "note": "高收益债 = 信用评级差、融资成本高、抗风险能力弱的企业的借款。HYG 是买入一篮子这类债券的基金，价格直接反映市场担心这些企业还不起钱的程度。用法：恐慌分两种——① 怕股票太贵（估值恐慌）：股票大跌，但企业还债能力没变，HYG 只小跌，这就是当前情形；② 怕企业破产（信用危机）：资金会从 HYG 狂撤，它会比股票跌得更狠。所以 HYG 是危机试金石：股崩+债稳=回调可扛；股债齐崩=真危机。灯号：距半年高点回撤 <3% 绿、3-8% 黄、>8% 红。"},
+{"name": "VXX 波动率期货ETN", "unit": "美元", "light": "y", "vals": [26.42,24.14,25.21,24.2,22.8,23.56,22.04,21.13,22.48,22.36,21.25,20.32,19.355,18.95,18.36,17.72,18.07,17.76,17.3,17.4,16.99,18.38,18.72,19.21,21.95,18.73,27.31], "dates": ["05-18","05-25","06-01","06-08","06-15","06-22","06-29","07-06","07-13","07-20","07-27","08-03","08-10","08-17","08-24","08-31","09-07","09-14","09-21","09-28","10-05","10-12","10-19","10-26","11-02","11-09","11-20"], "last": 27.31, "digits": 2, "w1": 45.81, "m1": 45.89, "m3": 44.12, "m6": 3.37, "pct": true, "note": "跟踪 VIX 期货滚动合约的 ETN。期货深度贴水（期货价>现货）时展期成本为负、价格持续蒸发；VXX 飙升=恐慌定价极致。<20 绿、20-35 黄、>35 红；自高点回落超 30% = 恐慌退潮，是拐点清单第三项。"}],
+"fxr": {"labels": ["2025-M01", "2025-M02", "2025-M03", "2025-M04", "2025-M05", "2025-M06", "2025-M07", "2025-M08", "2025-M09", "2025-M10", "2025-M11", "2025-M12", "2026-M01", "2026-M02", "2026-M03", "2026-M04", "2026-M05", "2026-M06", "2026-M07", "2026-M08", "2026-M09"], "vals": [3.174, 3.183, 3.226, 3.241, 3.267, 3.306, 3.281, 3.313, 3.329, 3.332, 3.33, 3.337, 3.382, 3.415, 3.327, 3.393, 3.433, 3.407, 3.41, 3.43, 3.391]},
+"cards": [
+{"name": "标普500", "unit": "", "light": "y", "vals": [7473.47, 7580.06, 7383.74, 7431.46, 7500.58, 7354.02, 7483.24, 7575.39, 7457.69, 7411.98, 7489.72, 7757.64, 7785.76, 7674.37, 7711.76, 7718.6, 7656.98, 7650.5, 7743.41, 7722.72, 7811.54, 7659.44, 7623.68, 7580.07, 7376.86, 7561.67, 6910.39], "dates": ["05-18", "05-25", "06-01", "06-08", "06-15", "06-22", "06-29", "07-06", "07-13", "07-20", "07-27", "08-03", "08-10", "08-17", "08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12", "10-19", "10-26", "11-02", "11-09", "11-20"], "last": 6910.39, "digits": 2, "w1": -8.61, "m1": -9.36, "m3": -9.95, "m6": -7.53, "pct": true, "note": "美股大盘，风险偏好的直接读数。距半年高点回撤 <5% 绿、5-15% 黄、>15% 红。但股市跌幅本身不能定义危机——必须与信用指标（HYG/HY OAS）交叉验证：股市跌、信用稳=回调；股市信用齐跌=危机。"},
+{"name": "纳斯达克100综指", "unit": "", "light": "r", "vals": [26343.9707,26972.6191,25709.4297,25888.8398,26517.9297,25297.6191,25832.6699,26281.6094,25520.2402,24975.8203,25373.8496,26690.6191,26729.1602,26180.4609,26402.4199,26506.9902,26333.0391,26522.5391,27068.7207,27190.8594,27366.1699,26140.0293,25955.3398,25437.0,24579.4297,25136.2695,22617.7324], "dates": ["05-18", "05-25", "06-01", "06-08", "06-15", "06-22", "06-29", "07-06", "07-13", "07-20", "07-27", "08-03", "08-10", "08-17", "08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12", "10-19", "10-26", "11-02", "11-09", "11-20"], "last": 22617.73, "digits": 0, "w1": -10.02, "m1": -11.08, "m3": -16.82, "m6": -14.14, "pct": true, "note": "对利率最敏感的指数（长久期成长股集中），紧缩交易里跌幅通常深于标普。距半年高点回撤 <5% 绿、5-15% 黄、>15% 红。纳指/标普相对强弱也是风格切换信号：纳指领跌=杀估值，纳指抗跌=杀盈利。"},
+{"name": "VIX恐慌指数", "unit": "", "light": "r", "vals": [16.7, 15.32, 21.51, 17.68, 16.4, 18.41, 16.15, 15.03, 18.77, 18.58, 15.99, 14.9, 14.25, 15.13, 14.43, 14.53, 15.84, 14.81, 14.87, 15.31, 14.84, 19.99, 19.45, 19.42, 25.64, 19.3, 35.89], "dates": ["05-18", "05-25", "06-01", "06-08", "06-15", "06-22", "06-29", "07-06", "07-13", "07-20", "07-27", "08-03", "08-10", "08-17", "08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12", "10-19", "10-26", "11-02", "11-09", "11-20"], "last": 35.89, "digits": 2, "cdigits": 2, "w1": 85.96, "m1": 84.81, "m3": 141.36, "m6": 114.91, "pct": true, "note": "标普期权隐含波动率，俗称恐慌指数。<20 绿、20-30 黄、>30 红。注意 VIX 是均值回归品种：读数极高（>40）本身接近恐慌峰值，要结合 VIX 期货贴水（VXX）判断是恐慌顶点还是恐慌起点。"},
+{"name": "黄金", "unit": "美元/盎司", "light": "r", "vals": [4523.2, 4593.0, 4365.3, 4238.8, 4172.9, 4096.3, 4187.3, 4113.7, 4018.8, 4070.8, 4107.0, 4399.7, 4437.3, 4680.6, 4529.9, 4476.6, 4408.9, 4424.9, 4321.2, 4162.3, 4216.3, 4181.1, 4007.9, 3898.9, 4074.9, 3886.3, 3515.4], "dates": ["05-18", "05-25", "06-01", "06-08", "06-15", "06-22", "06-29", "07-06", "07-13", "07-20", "07-27", "08-03", "08-10", "08-17", "08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12", "10-19", "10-26", "11-02", "11-09", "11-20"], "last": 3515.4, "digits": 1, "cdigits": 2, "w1": -9.54, "m1": -13.73, "m3": -15.54, "m6": -22.28, "pct": true, "note": "传统避险资产，但流动性危机中也会被抛售换现金（margin call 效应），急跌多发生在危机中段而非尾声。距高点回撤 <10% 绿、10-20% 黄、>20% 红。黄金与股同跌=流动性挤压；黄金涨+股跌=避险模式（更健康的调整）。"},
+{"name": "白银", "unit": "美元/盎司", "light": "r", "vals": [75.893,75.616,68.943,67.859,66.255,59.217,62.4,59.809,56.038,58.656,57.591,63.332,64.988,69.466,66.995,66.047,64.554,66.556,64.245,59.977,60.67,56.995,53.711,49.097,51.803,49.031,41.07], "dates": ["05-18", "05-25", "06-01", "06-08", "06-15", "06-22", "06-29", "07-06", "07-13", "07-20", "07-27", "08-03", "08-10", "08-17", "08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12", "10-19", "10-26", "11-02", "11-09", "11-20"], "last": 41.07, "digits": 2, "w1": -16.24, "m1": -16.35, "m3": -31.52, "m6": -45.88, "pct": true, "note": "黄金的高 beta 版，兼具工业属性，流动性冲击中跌幅常是黄金两倍。距高点回撤 <10% 绿、10-20% 黄、>20% 红。看金银比（本页第一张卡）比看白银单价更能读出流动性压力。"},
+{"name": "铜", "unit": "美元/磅", "light": "r", "vals": [6.342,6.3595,6.2635,6.4305,6.354,6.1415,6.1715,6.2335,6.22,6.32,6.436,6.5705,6.5995,6.5795,6.562,6.597,6.4695,6.615,6.6955,6.492,6.6425,6.531,6.476,6.4585,6.218,6.0795,5.485], "dates": ["05-18", "05-25", "06-01", "06-08", "06-15", "06-22", "06-29", "07-06", "07-13", "07-20", "07-27", "08-03", "08-10", "08-17", "08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12", "10-19", "10-26", "11-02", "11-09", "11-20"], "last": 5.485, "digits": 3, "w1": -9.78, "m1": -15.07, "m3": -15.51, "m6": -13.51, "pct": true, "note": "全球经济增长晴雨表（铜博士），被中国需求与全球制造业周期驱动。距高点回撤 <8% 绿、8-15% 黄、>15% 红。铜急跌=衰退定价；铜企稳回升常领先全球 PMI 反弹。"},
+{"name": "WTI原油", "unit": "美元/桶", "light": "r", "vals": [96.6, 87.36, 90.54, 84.88, 77.54, 69.23, 68.78, 71.41, 82.49, 89.31, 84.67, 78.18, 82.4, 87.06, 83.4, 91.48, 100.05, 100.3, 92.41, 91.11, 91.85, 101.41, 103.27, 104.12, 90.83, 88.56, 83.41], "dates": ["05-18", "05-25", "06-01", "06-08", "06-15", "06-22", "06-29", "07-06", "07-13", "07-20", "07-27", "08-03", "08-10", "08-17", "08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12", "10-19", "10-26", "11-02", "11-09", "11-20"], "last": 83.41, "digits": 2, "w1": -5.82, "m1": -19.23, "m3": -4.19, "m6": -13.65, "pct": true, "note": "原油。距高点回撤 <8% 绿、8-18% 黄、>18% 红。急跌=需求破坏/衰退定价，同时压低通胀预期与名义利率；但若是供给冲击导致的上涨，含义相反（滞胀）——下跌速度快慢比方向更能区分两种情形。"},
+{"name": "美债10Y收益率", "unit": "%", "light": "y", "vals": [4.558, 4.453, 4.536, 4.487, 4.451, 4.372, 4.485, 4.569, 4.541, 4.679, 4.745, 4.660, 4.696, 4.738, 4.720, 4.784, 4.975, 4.998, 5.184, 5.277, 5.244, 5.098, 4.988, 4.929, 4.859, 5.154, 4.912], "dates": ["05-18", "05-25", "06-01", "06-08", "06-15", "06-22", "06-29", "07-06", "07-13", "07-20", "07-27", "08-03", "08-10", "08-17", "08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12", "10-19", "10-26", "11-02", "11-09", "11-20"], "last": 4.91, "digits": 2, "cdigits": 2, "w1": -4.7, "m1": -0.35, "m3": -1.52, "m6": 7.77, "pct": true, "note": "全球资产定价锚。<4.5% 绿、4.5-5.2% 黄、>5.2% 红。持续高于 4.5% 会压制成长股与房地产估值；但危机模式下若因避险暴涨（如 2008），反而是现金荒信号——需结合 MOVE 判断上涨性质。"},
+{"name": "美元指数", "unit": "", "light": "y", "vals": [99.32, 98.91, 100.07, 99.75, 100.85, 101.36, 100.86, 100.97, 100.75, 101.47, 99.8, 99.6, 99.67, 98.8, 99.7, 99.16, 99.12, 100.22, 100.97, 101.93, 102.21, 101.84, 101.81, 101.88, 102.3, 103.41, 103.81], "dates": ["05-18", "05-25", "06-01", "06-08", "06-15", "06-22", "06-29", "07-06", "07-13", "07-20", "07-27", "08-03", "08-10", "08-17", "08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12", "10-19", "10-26", "11-02", "11-09", "11-20"], "last": 103.81, "digits": 2, "w1": 0.39, "m1": 1.99, "m3": 5.1, "m6": 4.55, "pct": true, "note": "美元强弱=全球流动性方向。走强=非美资产与新兴市场承压，是全球紧缩的镜像。<100 绿、100-105 黄、>105 红。历史上美元见顶（特别是急涨后放量滞涨）常领先全球风险资产见底。"},
+{"name": "USD/CNY 在岸", "unit": "", "light": "g", "vals": [6.8025, 6.7795, 6.7735, 6.7755, 6.7686, 6.79, 6.7886, 6.7921, 6.7725, 6.7725, 6.755, 6.7488, 6.7428, 6.7225, 6.7225, 6.719, 6.7061, 6.7074, 6.7111, 6.7045, 6.7021, 6.6909, 6.6779, 6.661, 6.688, 6.6704, 6.6665], "dates": ["05-17", "05-24", "05-31", "06-07", "06-14", "06-21", "06-28", "07-05", "07-12", "07-19", "07-26", "08-02", "08-09", "08-16", "08-23", "08-30", "09-06", "09-13", "09-20", "09-27", "10-04", "10-11", "10-18", "10-26", "11-02", "11-09", "11-20"], "last": 6.6665, "digits": 4, "cdigits": 2, "w1": -0.06, "m1": -0.16, "m3": 0.24, "m6": -1.84, "pct": true, "note": "人民币汇率，连接美元周期与人民币资产。<6.8 绿、6.8-7.0 黄、>7.0 红。7.0 是重要心理关口；在美元走强周期中人民币逆势升值，常是美元周期见顶的确认信号，也是 A股/港股压力缓和的前置指标。"}]};
+let DATA;
+try { DATA = await (await fetch('data.json?ts='+Date.now(),{cache:'no-store'})).json(); }
+catch(e) { DATA = SNAP; }
+;
+
+const NS='http://www.w3.org/2000/svg';
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function fmt(v,d){return v==null?'—':(v>0?'+':'')+v.toFixed(d);}
+function chip(tag,v,d,pct){if(v==null)return '';const cls=v>0?'up':(v<0?'dn':'');const s=pct?'%':'';return `<span class="chip ${cls} num">${tag} <b>${fmt(v,d)}${s}</b></span>`;}
+
+/* --- CPI chart --- */
+(function(){
+ const W=660,H=200,P={l:34,r:52,t:10,b:22};
+ const labels=DATA.cpi.labels,us=DATA.cpi.us,cn=DATA.cpi.cn;
+ const all=us.concat(cn);let lo=Math.min.apply(null,all),hi=Math.max.apply(null,all);
+ lo=Math.floor(lo*2)/2;hi=Math.ceil(hi*2)/2;
+ const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:'height:auto'},document.getElementById('cpiChart'));
+ const x=i=>P.l+(W-P.l-P.r)*i/(labels.length-1), y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+ for(let g=0;g<=4;g++){const v=lo+(hi-lo)*g/4;el('line',{x1:P.l,x2:W-P.r,y1:y(v),y2:y(v),stroke:'var(--kimi-color-text-quaternary)','stroke-width':0.5,'stroke-dasharray':'2,3'},svg);
+  const t=el('text',{x:P.l-6,y:y(v)+3,'text-anchor':'end','font-size':11,fill:'var(--kimi-color-text-tertiary)'},svg);t.textContent=v.toFixed(1);}
+ labels.forEach((m,i)=>{if(i%4===0||i===labels.length-1){const t=el('text',{x:x(i),y:H-6,'text-anchor':'middle','font-size':11,fill:'var(--kimi-color-text-tertiary)'},svg);t.textContent=m.replace('20','').replace('-M','-');}});
+ const mk=(arr,color)=>{const d=arr.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)).join('');
+  el('path',{d,fill:'none',stroke:color,'stroke-width':1.8},svg);
+  let imin=0,imax=0;arr.forEach((v,i)=>{if(v<arr[imin])imin=i;if(v>arr[imax])imax=i;});
+  [imin,imax].forEach(i=>{el('circle',{cx:x(i),cy:y(arr[i]),r:2.6,fill:color},svg);
+   const t=el('text',{x:Math.max(P.l+16,Math.min(x(i),W-P.r-16)),y:i===imax?Math.max(10,y(arr[i])-6):Math.min(H-P.b+8,y(arr[i])+14),'text-anchor':'middle','font-size':10,'font-weight':600,fill:color},svg);t.textContent=arr[i].toFixed(2);});
+  const i=arr.length-1;
+  const t=el('text',{x:Math.min(x(i)+5,W-4),y:y(arr[i])+3,'font-size':11,fill:color},svg);t.textContent=arr[i].toFixed(2);};
+ mk(us,'var(--kimi-chart-1)');mk(cn,'var(--kimi-chart-2)');
+ crosshair(svg,{W,H,P,x:x,y:y,dates:labels,series:[{vals:us,color:'var(--kimi-chart-1)',digits:2,name:'美国'},{vals:cn,color:'var(--kimi-chart-2)',digits:2,name:'中国'}],host:svg.parentElement});
+})();
+
+/* --- rates multi-line --- */
+(function(){
+ const W=660,H=200,P={l:34,r:40,t:10,b:22};
+ const labels=DATA.rates.labels;
+ const series=[{a:DATA.rates.w,c:'var(--kimi-chart-1)'},{a:DATA.rates.y5,c:'var(--kimi-chart-3)'},{a:DATA.rates.y10,c:'var(--kimi-chart-4)'},{a:DATA.rates.y30,c:'var(--kimi-chart-2)'}];
+ const all=series.flatMap(s=>s.a);let lo=Math.floor(Math.min.apply(null,all)*2)/2,hi=Math.ceil(Math.max.apply(null,all)*2)/2;
+ const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:'height:auto'},document.getElementById('ratesChart'));
+ const x=i=>P.l+(W-P.l-P.r)*i/(labels.length-1), y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+ for(let g=0;g<=4;g++){const v=lo+(hi-lo)*g/4;el('line',{x1:P.l,x2:W-P.r,y1:y(v),y2:y(v),stroke:'var(--kimi-color-text-quaternary)','stroke-width':0.5,'stroke-dasharray':'2,3'},svg);
+  const t=el('text',{x:P.l-6,y:y(v)+3,'text-anchor':'end','font-size':11,fill:'var(--kimi-color-text-tertiary)'},svg);t.textContent=v.toFixed(1);}
+ labels.forEach((m,i)=>{if(i%4===0||i===labels.length-1){const t=el('text',{x:x(i),y:H-6,'text-anchor':'middle','font-size':11,fill:'var(--kimi-color-text-tertiary)'},svg);t.textContent=m;}});
+ series.forEach(s=>{const d=s.a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)).join('');
+  el('path',{d,fill:'none',stroke:s.c,'stroke-width':1.6},svg);
+  let imin=0,imax=0;s.a.forEach((v,i)=>{if(v<s.a[imin])imin=i;if(v>s.a[imax])imax=i;});
+  [imin,imax].forEach(i=>{el('circle',{cx:x(i),cy:y(s.a[i]),r:2.4,fill:s.c},svg);
+   const t=el('text',{x:Math.max(P.l+14,Math.min(x(i),W-P.r-20)),y:i===imax?Math.max(10,y(s.a[i])-6):Math.min(H-P.b+8,y(s.a[i])+14),'text-anchor':'middle','font-size':10,'font-weight':600,fill:s.c},svg);t.textContent=s.a[i].toFixed(2);});
+  const i=s.a.length-1;el('circle',{cx:x(i),cy:y(s.a[i]),r:2.4,fill:s.c},svg);
+  const t=el('text',{x:Math.min(x(i)+5,W-30),y:y(s.a[i])+3,'font-size':11,fill:s.c},svg);t.textContent=s.a[i].toFixed(2);});
+ crosshair(svg,{W,H,P,x:x,y:y,dates:labels,series:[{vals:DATA.rates.w,color:'var(--kimi-chart-1)',digits:2,name:'13周'},{vals:DATA.rates.y5,color:'var(--kimi-chart-3)',digits:2,name:'5年'},{vals:DATA.rates.y10,color:'var(--kimi-chart-4)',digits:2,name:'10年'},{vals:DATA.rates.y30,color:'var(--kimi-chart-2)',digits:2,name:'30年'}],host:svg.parentElement});
+})();
+
+/* --- Fed dot plot --- */
+(function(){
+ const W=660,H=250,P={l:36,r:70,t:14,b:24};
+ const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:'height:auto'},document.getElementById('dots'));
+ const lo=3.0,hi=4.8;
+ const y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+ const cols=['2026','2027','2028','长期'];
+ const cx=i=>P.l+(W-P.l-P.r)*(i+0.5)/4;
+ for(let v=3.0;v<=4.75;v+=0.25){if(Math.round(v*4)%2===0){
+  el('line',{x1:P.l,x2:W-P.r,y1:y(v),y2:y(v),stroke:'var(--kimi-color-text-quaternary)','stroke-width':0.5,'stroke-dasharray':'2,3'},svg);
+  const t=el('text',{x:P.l-6,y:y(v)+3,'text-anchor':'end','font-size':11,fill:'var(--kimi-color-text-tertiary)'},svg);t.textContent=v.toFixed(1);}}
+ el('rect',{x:P.l,y:y(4.00),width:W-P.l-P.r,height:y(3.75)-y(4.00),fill:'var(--kimi-color-text-quaternary)',opacity:0.18},svg);
+ cols.forEach((c,i)=>{const t=el('text',{x:cx(i),y:H-6,'text-anchor':'middle','font-size':12,fill:'var(--kimi-color-text-secondary)','font-weight':500},svg);t.textContent=c;});
+ function dot(cx0,cy0){el('circle',{cx:cx0,cy:cy0,r:4,fill:'var(--kimi-chart-1)'},svg);}
+ const x0=cx(0);
+ [[3.875,2],[4.125,12],[4.375,4]].forEach(([v,n])=>{
+  if(n<=2){for(let k=0;k<n;k++)dot(x0+(k===0?-6:6),y(v));}
+  else if(n===4){[[-6,-4],[6,-4],[-6,4],[6,4]].forEach(([dx,dy])=>dot(x0+dx,y(v)+dy));}
+  else{const perRow=Math.ceil(n/2);for(let k=0;k<n;k++){const row=Math.floor(k/perRow),col=k%perRow;dot(x0+(col-(perRow-1)/2)*11,y(v)+(row?5:-5));}}
+  const t=el('text',{x:x0+34,y:y(v)+3,'font-size':11,fill:'var(--kimi-color-text-tertiary)'},svg);t.textContent=(v*100).toFixed(0)+'bp区 '+n+'人';
+ });
+ function diamond(x,y0,c){el('rect',{x:x-4.5,y:y0-4.5,width:9,height:9,fill:c,transform:`rotate(45 ${x} ${y0})`},svg);}
+ [[1,4.125],[2,3.9],[3,3.2]].forEach(([i,v])=>{diamond(cx(i),y(v),'var(--kimi-chart-2)');
+  const t=el('text',{x:cx(i)+10,y:y(v)+3,'font-size':11,fill:'var(--kimi-chart-2)'},svg);t.textContent=v.toFixed(2);});
+ el('circle',{cx:cx(0),cy:y(4.09),r:5,fill:'transparent',stroke:'var(--kimi-chart-3)','stroke-width':1.8},svg);
+ const mt=el('text',{x:cx(0)-56,y:y(4.09)+3,'text-anchor':'start','font-size':11,fill:'var(--kimi-chart-3)'},svg);mt.textContent='市场 4.09';
+})();
+
+/* --- HY OAS sparkline --- */
+(function(){
+ const host=document.querySelector('.spk2'),vals=DATA.hyoas.vals;
+ const W=640,H=64,P={l:30,r:8,t:6,b:16};
+ const lo=Math.min.apply(null,vals)-6,hi=Math.max.apply(null,vals)+6;
+ const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:'height:auto'},host);
+ const x=i=>P.l+(W-P.l-P.r)*i/(vals.length-1), y=v=>P.t+(H-P.t-P.r+6)*(1-(v-lo)/(hi-lo));
+ [300,320,340].forEach(v=>{if(v>lo&&v<hi){el('line',{x1:P.l,x2:W-P.r,y1:y(v),y2:y(v),stroke:'var(--kimi-color-text-quaternary)','stroke-width':0.5,'stroke-dasharray':'2,3'},svg);
+  const t=el('text',{x:P.l-4,y:y(v)+3,'text-anchor':'end','font-size':10,fill:'var(--kimi-color-text-quaternary)'},svg);t.textContent=v;}});
+ const d=vals.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)).join('');
+ el('path',{d,fill:'none',stroke:'#f7a700','stroke-width':1.8},svg);
+ vals.forEach((v,i)=>{el('circle',{cx:x(i),cy:y(v),r:2.2,fill:'#f7a700'},svg);
+  const t=el('text',{x:x(i),y:H-3,'text-anchor':'middle','font-size':10,fill:'var(--kimi-color-text-quaternary)'},svg);t.textContent=DATA.hyoas.dates[i].slice(3);});
+ let imin=0,imax=0;vals.forEach((v,i)=>{if(v<vals[imin])imin=i;if(v>vals[imax])imax=i;});
+ [[imin,12],[imax,-7]].forEach(([i,dy])=>{const t=el('text',{x:x(i),y:Math.max(9,Math.min(H-4,y(vals[i])+dy)),'text-anchor':'middle','font-size':10,'font-weight':600,fill:'#f7a700'},svg);t.textContent=vals[i];});
+ const t=el('text',{x:W-P.r,y:Math.max(9,y(vals[vals.length-1])-6),'text-anchor':'end','font-size':12,fill:'#f7a700','font-weight':500},svg);t.textContent='352';
+ crosshair(svg,{W,H,P,x:x,y:y,dates:DATA.hyoas.dates,series:[{vals,color:'#f7a700',digits:0}],host:host.closest('.card')||host});
+})();
+
+/* --- sparkline cards --- */
+const LT={r:'var(--kimi-color-danger)',y:'#f7a700',g:'var(--kimi-color-positive)'};
+function crosshair(svg,cfg){
+ const g=el('g',{style:'display:none;pointer-events:none'},svg);
+ const vl=el('line',{stroke:'var(--kimi-color-text-tertiary)','stroke-width':0.8,'stroke-dasharray':'3,2'},g);
+ const dots=cfg.series.map(s=>el('circle',{r:3.2,fill:s.color,stroke:'Canvas','stroke-width':1.2},g));
+ const tip=document.createElement('div');tip.className='tiptip';(cfg.host||svg.parentElement).appendChild(tip);
+ const step=(cfg.W-cfg.P.l-cfg.P.r)/(cfg.dates.length-1);
+ svg.addEventListener('mousemove',ev=>{
+  const r=svg.getBoundingClientRect();
+  const frac=(ev.clientX-r.left)/r.width;
+  let i=Math.round((frac*cfg.W-cfg.P.l)/step);
+  i=Math.max(0,Math.min(cfg.dates.length-1,i));
+  g.style.display='';
+  vl.setAttribute('x1',cfg.x(i));vl.setAttribute('x2',cfg.x(i));
+  vl.setAttribute('y1',cfg.P.t);vl.setAttribute('y2',cfg.H-cfg.P.b);
+  let html='<b>'+cfg.dates[i]+'</b>';
+  cfg.series.forEach((s,k)=>{
+   dots[k].setAttribute('cx',cfg.x(i));dots[k].setAttribute('cy',cfg.y(s.vals[i]));
+   const last=s.vals[s.vals.length-1],chg=(s.vals[i]/last-1)*100;
+   html+='<div><i style="background:'+s.color+'"></i>'+(s.name?(s.name+' '):'')+'<b>'+s.vals[i].toFixed(s.digits)+'</b> <span class="'+(chg>0?'up':(chg<0?'dn':''))+'">'+fmt(chg,2)+'% vs 现价</span></div>';
+  });
+  tip.innerHTML=html;tip.style.display='block';
+  const host=cfg.host||svg.parentElement;
+  const hr=host.getBoundingClientRect();
+  let left=ev.clientX-hr.left+12;
+  if(left+160>host.clientWidth)left=ev.clientX-hr.left-168;
+  tip.style.left=Math.max(4,left)+'px';
+  tip.style.top='10px';
+ });
+ svg.addEventListener('mouseleave',()=>{g.style.display='none';tip.style.display='none';});
+}
+function spark(host,vals,dates,color,digits){
+ const W=300,H=108,P={l:48,r:10,t:10,b:18};
+ const lo=Math.min.apply(null,vals),hi=Math.max.apply(null,vals),rg=(hi-lo)||1;
+ const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:'height:auto'},host);
+ const x=i=>P.l+(W-P.l-P.r)*i/(vals.length-1), y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/rg);
+ [lo,(lo+hi)/2,hi].forEach(v=>{el('line',{x1:P.l,x2:W-P.r,y1:y(v),y2:y(v),stroke:'var(--kimi-color-text-quaternary)','stroke-width':0.5,'stroke-dasharray':'2,3'},svg);
+  const t=el('text',{x:P.l-5,y:y(v)+3,'text-anchor':'end','font-size':9,fill:'var(--kimi-color-text-quaternary)'},svg);t.textContent=+v.toFixed(digits);});
+ dates.forEach((m,i)=>{if(i%6===0||i===dates.length-1){const t=el('text',{x:x(i),y:H-4,'text-anchor':'middle','font-size':9,fill:'var(--kimi-color-text-quaternary)'},svg);t.textContent=m;}});
+ const pts=vals.map((v,i)=>[x(i),y(v)]);
+ const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join('');
+ el('path',{d,fill:'none',stroke:color,'stroke-width':1.6},svg);
+ let imin=0,imax=0;vals.forEach((v,i)=>{if(v<vals[imin])imin=i;if(v>vals[imax])imax=i;});
+ [imin,imax].forEach(i=>{el('circle',{cx:pts[i][0],cy:pts[i][1],r:2.6,fill:color,stroke:'Canvas','stroke-width':1},svg);
+  const t=el('text',{x:Math.max(P.l+16,Math.min(pts[i][0],W-P.r-16)),y:i===imax?Math.max(10,pts[i][1]-7):Math.min(H-6,pts[i][1]+13),'text-anchor':'middle','font-size':10,'font-weight':600,fill:color},svg);t.textContent=vals[i].toFixed(digits);});
+ el('circle',{cx:pts[pts.length-1][0],cy:pts[pts.length-1][1],r:2.4,fill:color},svg);
+ crosshair(svg,{W,H,P,x:x,y:y,dates,series:[{vals,color,digits}],host:host.closest('.card')||host});
+}
+function card(c){
+ const pct=c.pct;
+ return `<div class="card"><div class="nm"><span>${c.name}</span><span style="display:inline-flex;align-items:center;gap:6px"><i class="lt l-${c.light}"></i><span class="num">${c.dates[c.dates.length-1]}</span></span></div>
+ <div class="vl num">${c.last.toFixed(c.digits)}<i>${c.unit}</i></div>
+ <div class="chips">${chip('周',c.w1,(c.cdigits!=null?c.cdigits:c.digits),pct)}${chip('月',c.m1,(c.cdigits!=null?c.cdigits:c.digits),pct)}${chip('3月',c.m3,(c.cdigits!=null?c.cdigits:c.digits),pct)}${chip('6月',c.m6,(c.cdigits!=null?c.cdigits:c.digits),pct)}</div>
+ <div class="spk" style="margin-top:8px"></div>
+ <div class="note" style="margin-top:6px">${c.note}</div></div>`;
+}
+function fill(gridId,arr){
+ const g=document.getElementById(gridId);
+ arr.forEach(c=>{const d=document.createElement('div');d.innerHTML=card(c);g.appendChild(d.firstChild);});
+ document.querySelectorAll('#'+gridId+' .card .spk').forEach((h,i)=>{const c=arr[i];spark(h,c.vals,c.dates,LT[c.light],c.digits);});
+}
+fill('g0',DATA.sig);
+fill('g2',DATA.cards.slice(0,3));
+fill('g3',DATA.cards.slice(3,7));
+fill('g1',DATA.cards.slice(7));
+
+/* --- status counts --- */
+(function(){
+ const scope=document.querySelectorAll('#db .card .lt, #db .sec .lt');
+ let r=0,y=0,g=0;
+ scope.forEach(e=>{if(e.classList.contains('l-r'))r++;else if(e.classList.contains('l-y'))y++;else g++;});
+ document.getElementById('cR').textContent=r;
+ document.getElementById('cY').textContent=y;
+ document.getElementById('cG').textContent=g;
+})();
+
+/* --- FX reserves bars --- */
+(function(){
+ const W=660,H=150,P={l:36,r:10,t:8,b:22};
+ const labels=DATA.fxr.labels,vals=DATA.fxr.vals;
+ let lo=Math.min.apply(null,vals),hi=Math.max.apply(null,vals);lo=Math.floor(lo*10)/10;hi=Math.ceil(hi*10)/10;
+ const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:'height:auto'},document.getElementById('fxrChart'));
+ const x=i=>P.l+(W-P.l-P.r)*i/(vals.length-1), y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+ [lo,(lo+hi)/2,hi].forEach(v=>{el('line',{x1:P.l,x2:W-P.r,y1:y(v),y2:y(v),stroke:'var(--kimi-color-text-quaternary)','stroke-width':0.5,'stroke-dasharray':'2,3'},svg);
+  const t=el('text',{x:P.l-6,y:y(v)+3,'text-anchor':'end','font-size':11,fill:'var(--kimi-color-text-tertiary)'},svg);t.textContent=v.toFixed(1);});
+ labels.forEach((m,i)=>{if(i%3===0||i===labels.length-1){const t=el('text',{x:x(i),y:H-6,'text-anchor':'middle','font-size':11,fill:'var(--kimi-color-text-tertiary)'},svg);t.textContent=m.replace('20','').replace('-M','-');}});
+ const bw=(W-P.l-P.r)/vals.length*0.55;
+ vals.forEach((v,i)=>{el('rect',{x:x(i)-bw/2,y:y(v),width:bw,height:Math.max(1,y(lo)-y(v)),rx:2,fill:'var(--kimi-color-positive)',opacity:0.85},svg);});
+ let imin=0,imax=0;vals.forEach((v,i)=>{if(v<vals[imin])imin=i;if(v>vals[imax])imax=i;});
+ [[imin,H-6],[imax,-5]].forEach(([i,dy])=>{const t=el('text',{x:x(i),y:i===imax?y(vals[i])-5:H-6,'text-anchor':'middle','font-size':10,'font-weight':600,fill:'var(--kimi-color-positive)'},svg);t.textContent=vals[i].toFixed(3);});
+ const i=vals.length-1;
+ const t=el('text',{x:Math.min(x(i)+bw/2+4,W-40),y:y(vals[i])+10,'font-size':11,fill:'var(--kimi-color-text-secondary)'},svg);t.textContent=vals[i].toFixed(2);
+})();
+
+(function(){
+ var asof=document.getElementById('asof');
+ if(DATA.meta&&DATA.meta.updated){asof.textContent='数据更新：'+DATA.meta.updated+(DATA===SNAP?'（离线快照）':'');}
+ if(DATA.hyoas&&DATA.hyoas.last!=null){
+  var vl=document.getElementById('hyo-vl'); if(vl) vl.innerHTML=DATA.hyoas.last+'<i>bp</i>';
+  var hd=document.getElementById('hyo-dt'); if(hd&&DATA.hyoas.dates) hd.textContent=DATA.hyoas.dates[DATA.hyoas.dates.length-1];
+ }
+ if(DATA.rates&&DATA.rates.w){
+  var L=DATA.rates,set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  set('r3m',L.w[L.w.length-1].toFixed(2));set('r5y',L.y5[L.y5.length-1].toFixed(2));
+  set('r10y',L.y10[L.y10.length-1].toFixed(2));set('r30y',L.y30[L.y30.length-1].toFixed(2));
+  set('rdiff',((L.y10[L.y10.length-1]-L.w[L.w.length-1])*100).toFixed(0)+'bp');
+ }
+ setInterval(async()=>{try{
+  var d=await(await fetch('data.json?ts='+Date.now(),{cache:'no-store'})).json();
+  if(d.meta&&DATA.meta&&d.meta.updated!==DATA.meta.updated){sessionStorage.setItem('dy',window.scrollY);location.reload();}
+ }catch(e){}},5*60*1000);
+ window.addEventListener('load',()=>{var y=sessionStorage.getItem('dy');if(y){window.scrollTo(0,+y);sessionStorage.removeItem('dy');}});
+})();
+document.getElementById('asof').textContent='数据截至 2026-11-20';
+</script>
+</body>
+</html>
