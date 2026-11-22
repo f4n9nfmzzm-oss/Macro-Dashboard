@@ -1,0 +1,29 @@
+name: update-dashboard-data
+on:
+  schedule:
+    - cron: "*/30 13-22 * * 1-5"   # 美股交易时段每30分钟（UTC 13-22 ≈ 美东 8-17 点）
+    - cron: "40 23 * * *"          # 每日收盘后一轮（HY OAS 在美东傍晚发布）
+  workflow_dispatch:               # 允许在 Actions 页面手动触发
+permissions:
+  contents: write
+concurrency:
+  group: update-data
+  cancel-in-progress: true
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch latest data
+        run: python update_data.py
+      - name: Commit and push if changed
+        run: |
+          git config user.name "data-bot"
+          git config user.email "data-bot@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet && echo "no change" && exit 0
+          git commit -m "data: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
